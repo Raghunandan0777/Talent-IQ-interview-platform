@@ -23,7 +23,7 @@ function DashboardPage() {
 
   const handleCreateRoom = () => {
     if (!roomConfig.problem || !roomConfig.difficulty) return;
-
+ 
     createSessionMutation.mutate(
       {
         problem: roomConfig.problem,

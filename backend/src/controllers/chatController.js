@@ -2,14 +2,26 @@ import { chatClient } from "../lib/stream.js";
 
 export async function getStreamToken(req, res) {
   try {
-    // use clerkId for Stream (not mongodb _id)=> it should match the id we have in the stream dashboard
-    const token = chatClient.createToken(req.user.clerkId);
+    const clerkId = req.user.clerkId;
+    const callId = req.params.callId;
+
+    if (!callId) {
+      return res.status(400).json({ message: "callId is required" });
+    }
+
+    // Create chat channel (safe even if exists)
+    const channel = chatClient.channel("messaging", callId);
+    await channel.create();
+    await channel.addMembers([clerkId]);
+
+    const token = chatClient.createToken(clerkId);
 
     res.status(200).json({
       token,
-      userId: req.user.clerkId,
+      userId: clerkId,
       userName: req.user.name,
       userImage: req.user.image,
+      callId,
     });
   } catch (error) {
     console.log("Error in getStreamToken controller:", error.message);
