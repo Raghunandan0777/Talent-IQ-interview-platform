@@ -12,6 +12,8 @@ const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Clerk Publishable Key");
 }
+console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
+
 
 const queryClient = new QueryClient();
 
