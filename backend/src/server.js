@@ -20,9 +20,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     ENV.CLIENT_URL,
-    "https://talent-iq-interview-platform.vercel.app",
-    "https://talent-iq-interview-platf-git-d1fc57-raghunandan-shahs-projects.vercel.app",
-    "https://talent-iq-interview-platform-lrk144dx9.vercel.app"
+   "https://talent-iq-interview-platform.netlify.app"
   ],
   credentials: true
 }));
