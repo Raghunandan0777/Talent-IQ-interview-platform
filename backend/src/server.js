@@ -9,7 +9,8 @@ import { connectDB } from "./lib/db.js";
 import { inngest, functions } from "./lib/inngest.js";
 
 import chatRoutes from "./routes/chatRoutes.js";
-import sessionRoutes from "./routes/sessionRoute.js";
+import sessionRoute from "./routes/sessionRoute.js";
+
 
 
 
@@ -21,8 +22,9 @@ app.use(express.json());
 // credentials:true meaning?? => server allows a browser to include cookies on request
 app.use(cors({
   origin: [
-    ENV.CLIENT_URL,
-   "https://talent-iq-interview-platform.netlify.app"
+     ENV.CLIENT_URL,
+    "http://localhost:5173",
+    "https://talent-iq-interview-platform.netlify.app"
   ],
   credentials: true
 }));
@@ -30,7 +32,7 @@ app.use(clerkMiddleware()); // this adds auth field to request object: req.auth(
 
 app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/chat", chatRoutes);
-app.use("/api/sessions", sessionRoutes);
+app.use("/api/sessions", sessionRoute);
 
 
 
