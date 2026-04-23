@@ -1,4 +1,4 @@
-import { chatClient } from "../lib/stream.js";
+import { chatClient, upsertStreamUser } from "../lib/stream.js";
 
 export async function getStreamToken(req, res) {
   try {
@@ -8,6 +8,13 @@ export async function getStreamToken(req, res) {
     if (!callId) {
       return res.status(400).json({ message: "callId is required" });
     }
+
+    // Ensure user exists in Stream before creating token and adding to channel
+    await upsertStreamUser({
+      id: clerkId,
+      name: req.user.name,
+      image: req.user.profileImage,
+    });
 
     // Create chat channel (safe even if exists)
     const channel = chatClient.channel("messaging", callId);

@@ -1,4 +1,5 @@
-import { chatClient, streamClient } from "../lib/stream.js";
+import mongoose from "mongoose";
+import { chatClient, streamClient, upsertStreamUser } from "../lib/stream.js";
 import Session from "../models/Session.js";
 
 export async function createSession(req, res) {
@@ -14,17 +15,22 @@ export async function createSession(req, res) {
       return res.status(400).json({ message: "Problem and difficulty are required" });
     }
 
+    // Ensure the user exists in Stream before creating any calls or channels
+    await upsertStreamUser({
+      id: clerkId,
+      name: req.user.name,
+      image: req.user.profileImage,
+    });
+
     // generate a unique call id for stream video
     const callId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const sessionId = new mongoose.Types.ObjectId();
 
-    // create session in db
-    const session = await Session.create({ problem, difficulty, host: userId, callId });
-
-    // create stream video call
+    // create stream video call FIRST
     await streamClient.video.call("default", callId).getOrCreate({
       data: {
         created_by_id: clerkId,
-        custom: { problem, difficulty, sessionId: session._id.toString() },
+        custom: { problem, difficulty, sessionId: sessionId.toString() },
       },
     });
 
@@ -36,6 +42,16 @@ export async function createSession(req, res) {
     });
 
     await channel.create();
+
+    // FINALLY create session in db
+    // If Stream fails above, the execution stops, and we avoid creating a ghost session in the DB.
+    const session = await Session.create({
+      _id: sessionId,
+      problem,
+      difficulty,
+      host: userId,
+      callId,
+    });
 
     res.status(201).json({ session });
   } catch (error) {
@@ -116,11 +132,19 @@ export async function joinSession(req, res) {
     // check if session is already full - has a participant
     if (session.participant) return res.status(409).json({ message: "Session is full" });
 
-    session.participant = userId;
-    await session.save();
+    // ensure user exists in stream before adding to channel
+    await upsertStreamUser({
+      id: clerkId,
+      name: req.user.name,
+      image: req.user.profileImage,
+    });
 
     const channel = chatClient.channel("messaging", session.callId);
     await channel.addMembers([clerkId]);
+
+    // Save to DB only after Stream success
+    session.participant = userId;
+    await session.save();
 
     res.status(200).json({ session });
   } catch (error) {
@@ -156,6 +180,7 @@ export async function endSession(req, res) {
     const channel = chatClient.channel("messaging", session.callId);
     await channel.delete();
 
+    // update db after Stream is successfully cleaned up
     session.status = "completed";
     await session.save();
 
