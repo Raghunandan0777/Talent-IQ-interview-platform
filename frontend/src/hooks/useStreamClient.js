@@ -56,7 +56,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
         await chatChannel.watch();
         setChannel(chatChannel);
       } catch (error) {
-        toast.error("Failed to join video call");
+        toast.error(`Failed to join video call: ${error.message}`);
         console.error("Error init call", error);
       } finally {
         setIsInitializingCall(false);
